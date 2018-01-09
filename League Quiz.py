@@ -6,7 +6,7 @@ import time
 import threading
 
 #Enter your API key
-APIkey = "RGAPI-87884aa5-79a5-42a9-ac46-bd8a09feb652"
+APIkey = ""
 
 class Quiz(Frame):
     def __init__(self, parent):
