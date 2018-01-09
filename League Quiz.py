@@ -2,9 +2,11 @@ import requests
 from tkinter import *
 from tkinter import ttk
 import tkinter.messagebox
+import time
+import threading
 
 #Enter your API key
-APIkey = ""
+APIkey = "RGAPI-87884aa5-79a5-42a9-ac46-bd8a09feb652"
 
 class Quiz(Frame):
     def __init__(self, parent):
@@ -14,14 +16,15 @@ class Quiz(Frame):
         self.tries = 0
         self.score = 0
         self.wrong = []
+        self.time = 5
         self.initUI()
-
 
     def initUI(self):
         self.parent.title("League of Legends Quiz")
         self.pack(fill=BOTH, expand=True)
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0,weight=1)
+
         self.get_dictionary()
 
         self.questions = Message(self, text=self.messages(), width=200)
@@ -32,6 +35,9 @@ class Quiz(Frame):
 
         self.results = Message(self, text=str(self.tries)+" \nout of 10")
         self.results.grid(row=2,sticky=E)
+
+        self.timer = Message(self, text=str(self.time) + " seconds")
+        self.timer.grid(row=2, sticky=W)
 
         submit = Button(self, text="Submit", command=self.check, relief=RIDGE, background="black", foreground="white")
         submit.grid(row=2)
@@ -49,6 +55,19 @@ class Quiz(Frame):
 
         self.parent.bind("<Return>", self.check)
 
+        t = threading.Thread(target=self.timers)
+        t.daemon = True
+        t.start()
+
+    def timers(self):
+        while self.time != 0:
+            time.sleep(1)
+            self.time = self.time-1
+            self.timer.configure(text=str(self.time) + " seconds")
+            if self.time == 0:
+                self.check()
+                self.time = 10
+
     def get_dictionary(self):
         #Retrieve league API data in json format
         leagueC = requests.get("https://euw1.api.riotgames.com/lol/static-data/v3/champions?locale=en_US&tags=all&dataById=false&api_key="+APIkey)
@@ -60,18 +79,23 @@ class Quiz(Frame):
             self.champions = self.json["data"][data]["name"]
             self.titles = self.json["data"][data]["title"]
             del self.json["data"][data]
-            return("Whose title is this - \n" + self.titles + "\n")
+            return "Whose title is this - \n" + self.titles + "\n"
 
     def check(self,enter=0):
-        me=self.entry.get()
         self.tries += 1
+
+        me=self.entry.get()
+
+        #Check if the user answer is equal to the actual answer
         if me.lower() == self.champions.lower():
             self.score+=1
         else:
             self.wrong.append([self.titles,me.lower(),self.champions.lower()])
 
+        #Change the number of tries and retrieve new text
         self.results.configure(text=str(self.tries) + " \nout of 10")
         self.questions.configure(text=self.messages())
+
         self.entry.delete(0,END)
 
         #When 10 questions has passed, show the answers and score
