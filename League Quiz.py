@@ -5,18 +5,15 @@ import tkinter.messagebox
 import time
 import threading
 
-#Enter your API key
-APIkey = ""
-
 class Quiz(Frame):
     def __init__(self, parent):
         Frame.__init__(self, parent)
-
+        self.timeSet = 5
         self.parent = parent
         self.tries = 0
         self.score = 0
         self.wrong = []
-        self.time = 5
+        self.time = self.timeSet
         self.initUI()
 
     def initUI(self):
@@ -66,11 +63,11 @@ class Quiz(Frame):
             self.timer.configure(text=str(self.time) + " seconds")
             if self.time == 0:
                 self.check()
-                self.time = 10
+                self.time = self.timeSet
 
     def get_dictionary(self):
         #Retrieve league API data in json format
-        leagueC = requests.get("https://euw1.api.riotgames.com/lol/static-data/v3/champions?locale=en_US&tags=all&dataById=false&api_key="+APIkey)
+        leagueC = requests.get("http://ddragon.leagueoflegends.com/cdn/9.3.1/data/en_US/champion.json")
         self.json = leagueC.json()
 
     def messages(self):
@@ -79,23 +76,23 @@ class Quiz(Frame):
             self.champions = self.json["data"][data]["name"]
             self.titles = self.json["data"][data]["title"]
             del self.json["data"][data]
-            return "Whose title is this - \n" + self.titles + "\n"
+            return "Whose title is this : \n" + self.titles + "\n"
 
     def check(self,enter=0):
         self.tries += 1
-
+        self.time = self.timeSet
         me=self.entry.get()
 
         #Check if the user answer is equal to the actual answer
         if me.lower() == self.champions.lower():
             self.score+=1
+            
         else:
             self.wrong.append([self.titles,me.lower(),self.champions.lower()])
 
         #Change the number of tries and retrieve new text
         self.results.configure(text=str(self.tries) + " \nout of 10")
         self.questions.configure(text=self.messages())
-
         self.entry.delete(0,END)
 
         #When 10 questions has passed, show the answers and score
